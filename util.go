@@ -3,11 +3,8 @@ package ipfs
 import (
 	"errors"
 	"os"
-	"strings"
 
-	cid "github.com/ipfs/go-cid"
 	files "github.com/ipfs/go-ipfs-files"
-	path "github.com/ipfs/interface-go-ipfs-core/path"
 
 	"github.com/pilinsin/util"
 )

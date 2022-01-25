@@ -85,7 +85,7 @@ func (self nameUtil) PublishCid(cidStr string, kw string, is *IPFS) string {
 		return ""
 	}
 	pth := ipath.IpfsPath(cid)
-	return is.NamePublish(pth, "", kw).Name()
+	return is.Name().Publish(pth, "", kw).Name()
 }
 func (self nameUtil) PublishCidWithKeyFile(cidStr string, kf *KeyFile, is *IPFS) string {
 	cid, err := cid.Decode(cidStr)

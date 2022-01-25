@@ -23,10 +23,10 @@ func (bm baseMap) toMap() map[string][]byte{
 }
 func (bm baseMap) toCid(is *IPFS) string{
 	m, _ := util.Marshal(bm)
-	return ToCidWithAdd(m, is)
+	return File.Add(m, is)
 }
 func (bm *baseMap) fromCid(cid string, is *IPFS) error{
-	m, err := FromCid(cid, is)
+	m, err := File.Get(cid, is)
 	if err != nil{return err}
 	return util.Unmarshal(m, bm)
 }
@@ -120,7 +120,7 @@ func (sm ScalableMap) ContainKey(key interface{}, is *IPFS) ([]byte, bool) {
 	return nil, false
 }
 func (sm ScalableMap) ContainCid(cid string, is *IPFS) bool {
-	m, err := FromCid(cid, is)
+	m, err := File.Get(cid, is)
 	if err != nil{return false}
 	sm0 := &ScalableMap{}
 	if err := sm0.Unmarshal(m); err != nil{

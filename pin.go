@@ -1,6 +1,8 @@
 package ipfs
 
 import(
+	"context"
+	
 	iface "github.com/ipfs/interface-go-ipfs-core"
 	ipath "github.com/ipfs/interface-go-ipfs-core/path"
 )

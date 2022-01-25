@@ -14,22 +14,22 @@ type file struct{
 	api iface.CoreAPI
 	ctx     context.Context
 }
-func (self *IPFS) FIle() *file{
+func (self *IPFS) File() *file{
 	return &file{self.api, self.ctx}
 }
-func (self *File) Add(data []byte, pn bool) ipath.Resolved {
+func (self *file) Add(data []byte, pn bool) ipath.Resolved {
 	file := files.NewBytesFile(data)
-	pth, _ := self.api.Unixfs().Add(ipfs.ctx, file, options.Unixfs.Pin(pn))
+	pth, _ := self.api.Unixfs().Add(self.ctx, file, options.Unixfs.Pin(pn))
 	return pth
 }
-func (self *File) Hash(data []byte) ipath.Resolved {
+func (self *file) Hash(data []byte) ipath.Resolved {
 	file := files.NewBytesFile(data)
-	pth, _ := self.api.Unixfs().Add(ipfs.ctx, file, options.Unixfs.HashOnly(true))
+	pth, _ := self.api.Unixfs().Add(self.ctx, file, options.Unixfs.HashOnly(true))
 	return pth
 }
 
-func (self *File) Get(pth ipath.Path) ([]byte, error) {
-	f, err := self.api.Unixfs().Get(ipfs.ctx, pth)
+func (self *file) Get(pth ipath.Path) ([]byte, error) {
+	f, err := self.api.Unixfs().Get(self.ctx, pth)
 	if err != nil {
 		return nil, err
 	} else {

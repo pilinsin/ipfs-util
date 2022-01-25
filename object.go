@@ -1,12 +1,18 @@
 package ipfs
 
 import(
+	"context"
+	"strings"
+	"path/filepath"
+
 	iface "github.com/ipfs/interface-go-ipfs-core"
 	options "github.com/ipfs/interface-go-ipfs-core/options"
 	ipath "github.com/ipfs/interface-go-ipfs-core/path"
 	unixfs "github.com/ipfs/go-unixfs"
 	dag "github.com/ipfs/go-merkledag"
 	ipld "github.com/ipfs/go-ipld-format"
+
+	"github.com/pilinsin/util"
 )
 
 type link struct{
@@ -136,8 +142,8 @@ func (self *fileSystem) Rm(from string){
 	self.nowPath, _ = self.findPath(self.nowPathStr)
 }
 func (self *fileSystem) Ls()[]link{
-	if ok := isLinked(self.nowPathStr); !ok{return nil}
-	return self.obj.Links(self.nowPathStr)
+	if ok := isLinked(self.nowPath, self.obj); !ok{return nil}
+	return self.obj.Links(self.nowPath)
 }
 func (self *fileSystem) Mldir(to string){
 	to = toAbsPath(self.nowPathStr, to)
@@ -150,7 +156,7 @@ func (self *fileSystem) findPath(to string) (ipath.Resolved, error){
 
 	pth := self.root
 	pathNameList := strings.Split(to, "/")
-	for idx,  name := range pathNameList{
+	for _,  name := range pathNameList{
 		if ok := isLinked(pth, self.obj); !ok{return nil, util.NewError("the path is not linked")}
 		if ok := isDir(pth, self.obj); !ok{return nil, util.NewError("the path is not a directory")}
 
@@ -174,8 +180,9 @@ func isLinked(pth ipath.Path, obj *object) bool{
 }
 func isDir(pth ipath.Path, obj *object) bool{
 	nd, _ := obj.Get(pth)
-	fsnd, _ := unixfs.FSNodeFromBytes(nd.Data())
-	return fsnd.Isdir()
+	pbnd := nd.(*dag.ProtoNode)
+	fsnd, _ := unixfs.FSNodeFromBytes(pbnd.Data())
+	return fsnd.IsDir()
 }
 func isPathContained(upper, lower string) bool{
 	upList := strings.Split(upper, "/")
@@ -204,5 +211,6 @@ func toAbsPath(from, to string) string{
 }
 
 func newEmptyDir() ipath.Path{
-	return unixfs.EmptyDirNode()
+	pbnd := unixfs.EmptyDirNode()
+	return ipath.IpfsPath(pbnd.Cid())
 }

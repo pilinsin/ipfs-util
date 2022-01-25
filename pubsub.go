@@ -37,7 +37,7 @@ func (self *pubsub) Next(sub iface.PubSubSubscription) []byte {
 func (self *pubsub) NextAll(sub iface.PubSubSubscription) [][]byte {
 	var dataset [][]byte
 	for {
-		data := self.PubSubNext(sub)
+		data := self.Next(sub)
 		if data == nil {
 			if len(dataset) > 0 {
 				return dataset
