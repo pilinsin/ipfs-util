@@ -23,7 +23,8 @@ import (
 )
 
 func newRepo(repoPath string) (repo.Repo, error) {
-	cfg, err := newConfig()
+	//ipfsKeyInit()
+	cfg, err := newConfig("")
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +45,16 @@ func loadPlugins() {
 	fsrepo.AddDatastoreConfigHandler("levelds", lp.DatastoreConfigParser())
 }
 
-func newConfig() (*config.Config, error) {
-	keyGenOpts := []options.KeyGenerateOption{options.Key.Type(options.Ed25519Key)}
-	id, err := config.CreateIdentity(ioutil.Discard, keyGenOpts)
+func newConfig(mode string) (*config.Config, error) {
+	var id config.Identity
+	var err error
+	switch mode {
+	case "original":
+		id, err = newOriginalKeydentity()
+	default:
+		keyGenOpts := []options.KeyGenerateOption{options.Key.Type(options.Ed25519Key)}
+		id, err = config.CreateIdentity(ioutil.Discard, keyGenOpts)
+	}
 	if err != nil {
 		return nil, err
 	}
