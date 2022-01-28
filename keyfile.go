@@ -6,11 +6,12 @@ import (
 	peer "github.com/libp2p/go-libp2p-core/peer"
 )
 
-var KeyFileMode  = "ed25519"
+var KeyFileMode = "ed25519"
 
 type KeyFile struct {
 	keyFile p2pcrypt.PrivKey
 }
+
 func (self nameUtil) NewKeyFile() *KeyFile {
 	var priv p2pcrypt.PrivKey
 	switch KeyFileMode {

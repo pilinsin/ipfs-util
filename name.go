@@ -1,26 +1,27 @@
 package ipfs
 
-import(
+import (
 	"context"
-	"time"
 	"strings"
+	"time"
 
 	cid "github.com/ipfs/go-cid"
 	kstore "github.com/ipfs/go-ipfs-keystore"
 	iface "github.com/ipfs/interface-go-ipfs-core"
-	ipath "github.com/ipfs/interface-go-ipfs-core/path"
 	options "github.com/ipfs/interface-go-ipfs-core/options"
 	nsopts "github.com/ipfs/interface-go-ipfs-core/options/namesys"
+	ipath "github.com/ipfs/interface-go-ipfs-core/path"
 
 	"github.com/pilinsin/util"
 )
 
-type name struct{
-	api iface.CoreAPI
-	ctx     context.Context
-	kStore  kstore.Keystore
+type name struct {
+	api    iface.CoreAPI
+	ctx    context.Context
+	kStore kstore.Keystore
 }
-func (self *IPFS) Name() *name{
+
+func (self *IPFS) Name() *name {
 	return &name{self.api, self.ctx, self.kStore}
 }
 func (self *name) hasKey(kw string) bool {
@@ -57,7 +58,9 @@ func (self *name) PublishWithKeyFile(pth ipath.Path, vt string, kFile *KeyFile) 
 func (self *name) Publish(pth ipath.Path, vt string, kw string) iface.IpnsEntry {
 	t := parseDuration(vt)
 
-	if kw == ""{kw = "self"}
+	if kw == "" {
+		kw = "self"
+	}
 	if kw != "self" && !self.hasKey(kw) {
 		self.api.Key().Generate(self.ctx, kw, options.Key.Type("ed25519"))
 	}
@@ -65,14 +68,15 @@ func (self *name) Publish(pth ipath.Path, vt string, kw string) iface.IpnsEntry 
 	return ipnsEntry
 }
 func (self *name) Resolve(name string) (ipath.Path, error) {
-	ctx, cancel := util.CancelTimerContext(10*time.Second)
+	ctx, cancel := util.CancelTimerContext(10 * time.Second)
 	defer cancel()
 	return self.api.Name().Resolve(ctx, name, options.Name.ResolveOption(nsopts.DhtRecordCount(1)))
 }
 
-
 type nameUtil struct{}
+
 var Name nameUtil
+
 func (self nameUtil) Publish(data []byte, kw string, is *IPFS) string {
 	pth := is.File().Add(data, true)
 	return is.Name().Publish(pth, "", kw).Name()

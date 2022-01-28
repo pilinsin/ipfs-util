@@ -4,7 +4,7 @@ import (
 	ipfs "github.com/pilinsin/ipfs-util"
 )
 
-type IScalableMap interface{
+type IScalableMap interface {
 	Len(is *ipfs.IPFS) int
 	Type() string
 	Next(is *ipfs.IPFS) <-chan []byte
@@ -15,7 +15,8 @@ type IScalableMap interface{
 	Marshal() []byte
 	Unmarshal(m []byte) error
 }
-func NewScalableMap(mode string, capacity int) IScalableMap{
+
+func NewScalableMap(mode string, capacity int) IScalableMap {
 	switch mode {
 	case "ordered":
 		return newOrderedScalableMap(capacity)
@@ -23,7 +24,7 @@ func NewScalableMap(mode string, capacity int) IScalableMap{
 		return newConstScalableMap(capacity)
 	}
 }
-func UnmarshalScalableMap(mode string, m []byte) (IScalableMap, error){
+func UnmarshalScalableMap(mode string, m []byte) (IScalableMap, error) {
 	switch mode {
 	case "ordered":
 		sm := &orderedScalableMap{}

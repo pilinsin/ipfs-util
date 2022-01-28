@@ -1,6 +1,6 @@
 package ipfs
 
-import(
+import (
 	"context"
 	"time"
 
@@ -12,11 +12,12 @@ import(
 	"github.com/pilinsin/util"
 )
 
-type file struct{
+type file struct {
 	api iface.CoreAPI
-	ctx     context.Context
+	ctx context.Context
 }
-func (self *IPFS) File() *file{
+
+func (self *IPFS) File() *file {
 	return &file{self.api, self.ctx}
 }
 func (self *file) Add(data []byte, pn bool) ipath.Resolved {
@@ -31,7 +32,7 @@ func (self *file) Hash(data []byte) ipath.Resolved {
 }
 
 func (self *file) Get(pth ipath.Path) ([]byte, error) {
-	ctx, cancel := util.CancelTimerContext(10*time.Second)
+	ctx, cancel := util.CancelTimerContext(10 * time.Second)
 	defer cancel()
 	f, err := self.api.Unixfs().Get(ctx, pth)
 	if err != nil {
@@ -42,7 +43,9 @@ func (self *file) Get(pth ipath.Path) ([]byte, error) {
 }
 
 type fileUtil struct{}
+
 var File fileUtil
+
 func (self fileUtil) Hash(data []byte, is *IPFS) string {
 	return is.File().Hash(data).Cid().String()
 }

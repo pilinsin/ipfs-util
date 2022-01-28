@@ -40,7 +40,3 @@ func dirPathToIpfsFileNode(dirPath string) (files.Node, error) {
 	}
 	return files.NewSerialFile(dirPath, false, st)
 }
-
-
-
-

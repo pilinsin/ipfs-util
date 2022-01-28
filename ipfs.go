@@ -12,9 +12,9 @@ import (
 )
 
 type IPFS struct {
-	api iface.CoreAPI
-	ctx     context.Context
-	kStore  kstore.Keystore
+	api    iface.CoreAPI
+	ctx    context.Context
+	kStore kstore.Keystore
 }
 
 func New(repoStr string) (*IPFS, error) {
@@ -32,7 +32,7 @@ func New(repoStr string) (*IPFS, error) {
 	buildCfg := core.BuildCfg{
 		Online:    true,
 		Repo:      r,
-		Routing: libp2p.DHTOption,
+		Routing:   libp2p.DHTOption,
 		ExtraOpts: exOpts,
 	}
 

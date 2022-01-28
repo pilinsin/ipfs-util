@@ -1,6 +1,6 @@
 package ipfs
 
-import(
+import (
 	"context"
 	"time"
 
@@ -10,11 +10,12 @@ import(
 	"github.com/pilinsin/util"
 )
 
-type pubsub struct{
+type pubsub struct {
 	api iface.CoreAPI
-	ctx     context.Context
+	ctx context.Context
 }
-func (self *IPFS) PubSub() *pubsub{
+
+func (self *IPFS) PubSub() *pubsub {
 	return &pubsub{self.api, self.ctx}
 }
 func (self *pubsub) Publish(data []byte, topic string) {
@@ -25,7 +26,7 @@ func (self *pubsub) Subscribe(topic string) iface.PubSubSubscription {
 	return sub
 }
 func (self *pubsub) Next(sub iface.PubSubSubscription) []byte {
-	ctx, cancel := util.CancelTimerContext(5*time.Second)
+	ctx, cancel := util.CancelTimerContext(5 * time.Second)
 	defer cancel()
 
 	msg, err := sub.Next(ctx)
