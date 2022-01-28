@@ -65,7 +65,9 @@ func (self *name) Publish(pth ipath.Path, vt string, kw string) iface.IpnsEntry 
 	return ipnsEntry
 }
 func (self *name) Resolve(name string) (ipath.Path, error) {
-	return self.api.Name().Resolve(self.ctx, name, options.Name.ResolveOption(nsopts.DhtRecordCount(1)))
+	ctx, cancel := util.CancelTimerContext(10*time.Second)
+	defer cancel()
+	return self.api.Name().Resolve(ctx, name, options.Name.ResolveOption(nsopts.DhtRecordCount(1)))
 }
 
 

@@ -3,11 +3,14 @@ package main
 import(
 	"fmt"
 	"github.com/pilinsin/ipfs-util"
+	scmap "github.com/pilinsin/ipfs-util/scalablemap"
 )
 
 func main(){
 	is, _ := ipfs.New("test-ipfs")
-	
+	mapExample("const", is)
+	mapExample("ordered", is)
+
 	fileExample(is)
 	nameExample(is)	
 }
@@ -39,4 +42,14 @@ func nameExample(is *ipfs.IPFS){
 	cid1, _ := ipfs.Name.GetCid(name, is)
 	fmt.Println(cid)
 	fmt.Println(cid1)
+}
+
+
+func mapExample(mode string, is *ipfs.IPFS){
+	vm := scmap.NewScalableMap(mode, 10000)
+	vm.Append("a", nil, is)
+	m := vm.Marshal()
+	vm2, err := scmap.UnmarshalScalableMap(mode, m)
+	cid := ipfs.File.Add(m, is)
+	fmt.Println(vm2.ContainCid(cid, is), err)
 }

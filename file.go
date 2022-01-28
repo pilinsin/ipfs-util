@@ -2,12 +2,14 @@ package ipfs
 
 import(
 	"context"
+	"time"
 
 	cid "github.com/ipfs/go-cid"
 	files "github.com/ipfs/go-ipfs-files"
 	iface "github.com/ipfs/interface-go-ipfs-core"
 	options "github.com/ipfs/interface-go-ipfs-core/options"
 	ipath "github.com/ipfs/interface-go-ipfs-core/path"
+	"github.com/pilinsin/util"
 )
 
 type file struct{
@@ -29,7 +31,9 @@ func (self *file) Hash(data []byte) ipath.Resolved {
 }
 
 func (self *file) Get(pth ipath.Path) ([]byte, error) {
-	f, err := self.api.Unixfs().Get(self.ctx, pth)
+	ctx, cancel := util.CancelTimerContext(10*time.Second)
+	defer cancel()
+	f, err := self.api.Unixfs().Get(ctx, pth)
 	if err != nil {
 		return nil, err
 	} else {

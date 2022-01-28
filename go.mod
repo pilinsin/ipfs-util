@@ -16,5 +16,6 @@ require (
 	github.com/ipfs/interface-go-ipfs-core v0.5.2 // indirect
 	github.com/libp2p/go-libp2p-core v0.11.0 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
-	github.com/pilinsin/util v0.0.0-20220125062057-6a4af6fcfa4a // indirect
+	github.com/pilinsin/util v0.0.0-20220128054535-ed8cfd4d8632 // indirect
+
 )
