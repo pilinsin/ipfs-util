@@ -47,7 +47,7 @@ func main() {
 //	*/
 }
 func hlsExample(is *ipfs.IPFS){
-	cid, err := hls.ConvertAndAdd("/home/yo-cana/test/kyuuketsuki 01.mp4", "/usr/bin/ffmpeg", "/usr/bin/ffprobe", "https://ipfs.io/ipfs/", is)
+	cid, err := hls.ConvertAndAdd("example.mp4", "/usr/bin/ffmpeg", "/usr/bin/ffprobe", "https://ipfs.io/ipfs/", is)
 	fmt.Println(cid, err)	
 }
 
