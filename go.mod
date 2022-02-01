@@ -3,8 +3,9 @@ module github.com/pilinsin/ipfs-util
 go 1.16
 
 require (
-	github.com/flynn/noise v1.0.0 // indirect
+	github.com/grafov/m3u8 v0.11.1 // indirect
 	github.com/ipfs/go-cid v0.1.0 // indirect
+	github.com/ipfs/go-datastore v0.5.1 // indirect
 	github.com/ipfs/go-ipfs v0.11.0 // indirect
 	github.com/ipfs/go-ipfs-config v0.18.0 // indirect
 	github.com/ipfs/go-ipfs-files v0.0.9 // indirect
@@ -16,6 +17,6 @@ require (
 	github.com/ipfs/interface-go-ipfs-core v0.5.2 // indirect
 	github.com/libp2p/go-libp2p-core v0.11.0 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
-	github.com/pilinsin/util v0.0.0-20220128054535-ed8cfd4d8632 // indirect
-
+	github.com/multiformats/go-multiaddr v0.4.1 // indirect
+	github.com/pilinsin/util v0.0.0-20220131085505-074243f6e817 // indirect
 )

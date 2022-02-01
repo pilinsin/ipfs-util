@@ -5,6 +5,21 @@ import (
 	"os"
 	"path/filepath"
 
+/*
+	"context"
+	"crypto/ed25519"
+
+	tor "github.com/cretz/bine/tor"
+	libtor "github.com/ipsn/go-libtor"
+	madns "github.com/multiformats/go-multiaddr-dns"
+	oniontp "github.com/cpacia/go-onion-transport"
+	libp2p "github.com/libp2p/go-libp2p"
+	p2pconf "github.com/libp2p/go-libp2p/config"
+	host "github.com/libp2p/go-libp2p-core/host"
+	peer "github.com/libp2p/go-libp2p-core/peer"
+	pstore "github.com/libp2p/go-libp2p-core/peerstore"
+*/
+
 	config "github.com/ipfs/go-ipfs-config"
 	assets "github.com/ipfs/go-ipfs/assets"
 	core "github.com/ipfs/go-ipfs/core"
@@ -21,8 +36,51 @@ import (
 
 	"github.com/pilinsin/util"
 )
+/*
+func newTor() (string, libp2p.HostOption, *madns.Resolver, error){
+	repoPath, _ := ioutil.TempDir("", "ipfs-tmp/tmp")
+	torDir := filepath.Join(repoPath, "tor")
+	client, err := tor.Start(nil, &tor.StartConf{
+		ProcessCreator: libtor.Creator,
+		DataDir: torDir,
+		NoAutoSocksPort: true,
+		EnableNetwork: true,
+		ExtraArgs: []string{"--DNSPort", "2121"},
+	})
+	if err != nil{return "", nil, nil, err}
 
-func newRepo(repoPath string) (repo.Repo, error) {
+	dialer, err := client.Dialer(util.NewContext(), nil)
+	if err != nil{return "", nil, nil, err}
+	_, priv, _ := ed25519.GenerateKey(nil)
+	service, err := client.Listen(util.NewContext(), &tor.ListenConf{
+		RemotePorts: []int{9003},
+		Version3: true,
+		Key: priv,
+	})
+	if err != nil{return "", nil, nil, err}
+
+	madns.DefaultResolver = oniontp.NewTorResolver("localhost:2121")
+	dialOnionOnly := true
+	tpOpt := libp2p.Transport(oniontp.NewOnionTransportC(dialer, service, dialOnionOnly))
+	torHost := func(ctx context.Context, id peer.ID, ps pstore.PeerStore, opts ...libp2p.Option) (host.Host, err){
+		priKey := ps.PrivKey(id)
+		if priv == nil{return nil, fmt.Errorf("missing private key for node ID: %s", id,Pretty())}
+		opts = append([]libp2p.Option{libp2p.Identity(priKey), libp2p.Peerstore(ps)}, opts...)
+		cfg := &p2pconf.config{}
+		if err := cfg.Apply(opts...); err != nil{return nil, err}
+		cfg.Transports = nil
+		if err := tpOpt(cfg); err != nil{return nil, err}
+		return cfg.NewNode(ctx)
+	}
+	swarmAddr := fmt.Sprintf("/onion3/%s:9003", service.ID)
+
+	return swarmAddr, torHost, madns.DefaultResolver, nil
+}
+*/
+
+func newRepo() (repo.Repo, error) {
+	repoPath, _ := ioutil.TempDir("", "ipfs-tmp")
+
 	//ipfsKeyInit()
 	cfg, err := newConfig("")
 	if err != nil {

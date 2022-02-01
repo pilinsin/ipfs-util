@@ -3,9 +3,11 @@ package ipfs
 import (
 	"context"
 	"time"
+	"bytes"
 
 	cid "github.com/ipfs/go-cid"
 	files "github.com/ipfs/go-ipfs-files"
+	uio "github.com/ipfs/go-unixfs/io"
 	iface "github.com/ipfs/interface-go-ipfs-core"
 	options "github.com/ipfs/interface-go-ipfs-core/options"
 	ipath "github.com/ipfs/interface-go-ipfs-core/path"
@@ -38,7 +40,9 @@ func (self *file) Get(pth ipath.Path) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	} else {
-		return ipfsFileNodeToBytes(f)
+		buf := &bytes.Buffer{}
+		_, err := buf.ReadFrom(f.(uio.ReadSeekCloser))
+		return buf.Bytes(), err
 	}
 }
 

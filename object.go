@@ -1,6 +1,7 @@
 package ipfs
 
 import (
+	"fmt"
 	"context"
 	"path/filepath"
 	"strings"
@@ -72,6 +73,9 @@ func (self objectUtil) NewFileSystem(is *IPFS) *fileSystem {
 	now := ipath.IpfsPath(rt.Cid())
 	return &fileSystem{is.Object(), rt, now, "/"}
 }
+func (self *fileSystem) Root() ipath.Resolved{
+	return ipath.IpfsPath(self.root.Cid())
+}
 func (self *fileSystem) Add(pth ipath.Path, to string) {
 	to = toAbsPath(self.nowPathStr, to)
 	self.root = self.obj.AddLink(self.root, pth, to)
@@ -88,7 +92,7 @@ func (self *fileSystem) GetAllFiles(root ipath.Path) []link {
 		return files
 	}
 	for _, link := range self.obj.Links(root) {
-		if ok := isDir(link.Path, self.obj); !ok {
+		if isDir(link.Path, self.obj){
 			files2 := self.GetAllFiles(link.Path)
 			files = append(files, files2...)
 		} else {
@@ -100,19 +104,27 @@ func (self *fileSystem) GetAllFiles(root ipath.Path) []link {
 func (self *fileSystem) Cd(to string) {
 	to = toAbsPath(self.nowPathStr, to)
 	pth, err := self.findPath(to)
-	if err == nil && isDir(pth, self.obj) {
-		self.nowPath = pth
-		self.nowPathStr = to
+	if err != nil{
+		fmt.Println("cd:", err)
+		return
 	}
+	if  ok := isDir(pth, self.obj); !ok{
+		fmt.Println("can not cd to file")
+		return
+	}
+	self.nowPath = pth
+	self.nowPathStr = to
 }
 func (self *fileSystem) Cp(from, to string) {
 	from = toAbsPath(self.nowPathStr, from)
 	to = toAbsPath(self.nowPathStr, to)
 	if from == to {
+		fmt.Println("cp: from == to")
 		return
 	}
 	pth, err := self.findPath(from)
 	if err != nil {
+		fmt.Println("cp from:", err)
 		return
 	}
 
@@ -123,14 +135,18 @@ func (self *fileSystem) Cp(from, to string) {
 func (self *fileSystem) Mv(from, to string) {
 	from = toAbsPath(self.nowPathStr, from)
 	to = toAbsPath(self.nowPathStr, to)
-	if from == "" || from == to {
+	if from == ""{
+		fmt.Println("mv: can not mv root")
+	}
+	if from == to {
+		fmt.Println("mv: from == to")
 		return
 	}
 	pth, err := self.findPath(from)
 	if err != nil {
+		fmt.Println("mv:", err)
 		return
 	}
-
 	self.root = self.obj.AddLink(self.root, pth, to)
 	self.root = self.obj.RmLink(self.root, from)
 	if isPathContained(from, self.nowPathStr) {
@@ -143,10 +159,12 @@ func (self *fileSystem) Mv(from, to string) {
 func (self *fileSystem) Rm(from string) {
 	from = toAbsPath(self.nowPathStr, from)
 	if from == "" {
+		fmt.Println("rm: can not rm root")
 		return
 	}
 	_, err := self.findPath(from)
 	if err != nil {
+		fmt.Println("rm:", err)
 		return
 	}
 
@@ -160,11 +178,12 @@ func (self *fileSystem) Rm(from string) {
 }
 func (self *fileSystem) Ls() []link {
 	if ok := isLinked(self.nowPath, self.obj); !ok {
+		fmt.Println("ls: not linked")
 		return nil
 	}
 	return self.obj.Links(self.nowPath)
 }
-func (self *fileSystem) Mldir(to string) {
+func (self *fileSystem) Mkdir(to string) {
 	to = toAbsPath(self.nowPathStr, to)
 	self.root = self.obj.AddLink(self.root, newEmptyDir(), to)
 	self.nowPathStr = toAbsPath(self.nowPathStr, self.nowPathStr)
