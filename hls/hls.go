@@ -15,19 +15,21 @@ func addDirPath(parent, child string) string{
 	return filepath.Join(dir, child)
 }
 
-func ConvertAndAdd(input, fmpgPath, fprbPath, httpGatewayIpfs string, is *ipfs.IPFS) (string, error){
+func ConvertAndAdd(input, fmpgPath, fprbPath string, is *ipfs.IPFS) (string, error){
 	output := addDirPath(input, "output_video")
 	m3u8Path, err := util.VideoToHLS(input, output, fmpgPath, fprbPath)
 	if err != nil{return "", err}
-	return Add(m3u8Path, httpGatewayIpfs, is)
+	return Add(m3u8Path, is)
 }
 
-func Add(m3u8Path, httpGatewayIpfs string, is *ipfs.IPFS) (string, error){
+func Add(m3u8Path string, is *ipfs.IPFS) (string, error){
 	f, err := os.Open(m3u8Path)
 	if err != nil{return "", err}
 	defer f.Close()
 	p, listType, err := m3u8.DecodeFrom(bufio.NewReader(f), true)
 	if err != nil{return "", err}
+
+	ipfsFs := ipfs.Object.NewFileSystem(is)
 
 	switch listType {
 	case m3u8.MEDIA:
@@ -37,9 +39,9 @@ func Add(m3u8Path, httpGatewayIpfs string, is *ipfs.IPFS) (string, error){
 			uri := addDirPath(m3u8Path, segment.URI)
 			data, err := os.ReadFile(uri)
 			if err != nil{return "", err}
-			cid := ipfs.File.Add(data, is)
-			segment.URI = httpGatewayIpfs + cid
-			//os.Remove(uri)
+			pth := is.File().Add(data, true)
+			ipfsFs.Add(pth, segment.URI)
+			//os.Remove(segment.URI)
 		}
 	default:
 		playList := p.(*m3u8.MasterPlaylist)
@@ -48,23 +50,25 @@ func Add(m3u8Path, httpGatewayIpfs string, is *ipfs.IPFS) (string, error){
 			uri := addDirPath(m3u8Path, variant.URI)
 			data, err := os.ReadFile(uri)
 			if err != nil{return "", err}
-			cid := ipfs.File.Add(data, is)
-			variant.URI = httpGatewayIpfs + cid
+			pth := is.File().Add(data, true)
+			ipfsFs.Add(pth, variant.URI)
 
 			for _, segment := range variant.Chunklist.Segments{
 				if segment == nil{break}
 				uri := addDirPath(m3u8Path, segment.URI)
 				data, err := os.ReadFile(uri)
 				if err != nil{return "", err}
-				cid := ipfs.File.Add(data, is)
-				segment.URI = httpGatewayIpfs + cid
-				//os.Remove(uri)
+				pth := is.File().Add(data, true)
+				ipfsFs.Add(pth, segment.URI)
+				//os.Remove(segment.URI)
 			}
-			//os.Remove(uri)
+			//os.Remove(variant.URI)
 		}
 
 	}
 	m := p.Encode().Bytes()
-	os.WriteFile(addDirPath(m3u8Path, "tmp.m3u8"), m, 0755)
-	return ipfs.File.Add(m, is), nil
+	pth := is.File().Add(m, true)
+	_, m3u8FileName := filepath.Split(m3u8Path)
+	ipfsFs.Add(pth, m3u8FileName)
+	return pth.Cid().String(), nil
 }

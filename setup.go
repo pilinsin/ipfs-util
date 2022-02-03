@@ -37,8 +37,7 @@ import (
 	"github.com/pilinsin/util"
 )
 /*
-func newTor() (string, libp2p.HostOption, *madns.Resolver, error){
-	repoPath, _ := ioutil.TempDir("", "ipfs-tmp/tmp")
+func newTor(repoPath string) (string, libp2p.HostOption, *madns.Resolver, error){
 	torDir := filepath.Join(repoPath, "tor")
 	client, err := tor.Start(nil, &tor.StartConf{
 		ProcessCreator: libtor.Creator,
@@ -78,9 +77,7 @@ func newTor() (string, libp2p.HostOption, *madns.Resolver, error){
 }
 */
 
-func newRepo() (repo.Repo, error) {
-	repoPath, _ := ioutil.TempDir("", "ipfs-tmp")
-
+func newRepo(repoPath string) (repo.Repo, error) {
 	//ipfsKeyInit()
 	cfg, err := newConfig("")
 	if err != nil {

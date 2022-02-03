@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 	"bytes"
+	"io"
 
 	cid "github.com/ipfs/go-cid"
 	files "github.com/ipfs/go-ipfs-files"
@@ -27,12 +28,21 @@ func (self *file) Add(data []byte, pn bool) ipath.Resolved {
 	pth, _ := self.api.Unixfs().Add(self.ctx, file, options.Unixfs.Pin(pn))
 	return pth
 }
+func (self *file) AddReader(r io.Reader, pn bool) ipath.Resolved{
+	file := files.NewReaderFile(r)
+	pth, _ := self.api.Unixfs().Add(self.ctx, file, options.Unixfs.Pin(pn))
+	return pth
+}
 func (self *file) Hash(data []byte) ipath.Resolved {
 	file := files.NewBytesFile(data)
 	pth, _ := self.api.Unixfs().Add(self.ctx, file, options.Unixfs.HashOnly(true))
 	return pth
 }
-
+func (self *file) HashReader(r io.Reader) ipath.Resolved {
+	file := files.NewReaderFile(r)
+	pth, _ := self.api.Unixfs().Add(self.ctx, file, options.Unixfs.HashOnly(true))
+	return pth
+}
 func (self *file) Get(pth ipath.Path) ([]byte, error) {
 	ctx, cancel := util.CancelTimerContext(10 * time.Second)
 	defer cancel()
@@ -43,6 +53,16 @@ func (self *file) Get(pth ipath.Path) ([]byte, error) {
 		buf := &bytes.Buffer{}
 		_, err := buf.ReadFrom(f.(uio.ReadSeekCloser))
 		return buf.Bytes(), err
+	}
+}
+func (self *file) GetReader(pth ipath.Path) (io.ReadSeekCloser, error) {
+	ctx, cancel := util.CancelTimerContext(10 * time.Second)
+	defer cancel()
+	f, err := self.api.Unixfs().Get(ctx, pth)
+	if err != nil {
+		return nil, err
+	} else {
+		return f.(uio.ReadSeekCloser), nil
 	}
 }
 

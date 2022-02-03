@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 	"github.com/pilinsin/ipfs-util"
 	hls "github.com/pilinsin/ipfs-util/hls"
@@ -9,57 +10,48 @@ import (
 )
 
 func main() {
-	is, err := ipfs.New(false)
+	is, err := ipfs.New("")
 	if err != nil{
 		fmt.Println(err)
 		return
 	}
+	defer is.Close()
+	is2, err := ipfs.New("")
+	if err != nil{
+		fmt.Println(err)
+		return
+	}
+	defer is2.Close()
+	
 	//hlsExample(is)
-//	/*
-	data := []byte("meow meow 3 ^.^")
-	fs := ipfs.Object.NewFileSystem(is)
-	pth := is.File().Add(data, true)
-	fmt.Println(pth)
-	data0, err := is.File().Get(pth)
-	fmt.Println(string(data0), err)
-	fs.Add(pth, "data.txt")
-	fmt.Println(fs.Root())
-	pth0, err := fs.Get("/data.txt")
-	fmt.Println(pth0, err)
-//	*/
 
 //	/*
 	mapExample("const", is)
 	mapExample("ordered", is)
 
-	fileExample(is)
-	nameExample(is)
-//	*/
-//	/*
-	objectExample(is)
-
-	is2, err := ipfs.New(false)
-	if err != nil{
-		fmt.Println(err)
-		return
-	}
+	fileExample(is, is2)
+	nameExample(is, is2)
+	objectExample(is, is2)
 	pubsubExample(is, is2)
 //	*/
 }
 func hlsExample(is *ipfs.IPFS){
-	cid, err := hls.ConvertAndAdd("example.mp4", "/usr/bin/ffmpeg", "/usr/bin/ffprobe", "https://ipfs.io/ipfs/", is)
+	cid, err := hls.ConvertAndAdd("example.mp4", "/usr/bin/ffmpeg", "/usr/bin/ffprobe", is)
 	fmt.Println(cid, err)	
+	m, err := ipfs.File.Get(cid, is)
+	fmt.Println(err)
+	fmt.Println(os.WriteFile("video.m3u8", m, 0777))
 }
 
-func fileExample(is *ipfs.IPFS) {
+func fileExample(is, is2 *ipfs.IPFS) {
 	data := []byte("meow meow ^.^")
 
 	cid := ipfs.File.Add(data, is)
-	data1, _ := ipfs.File.Get(cid, is)
+	data1, _ := ipfs.File.Get(cid, is2)
 	fmt.Println(data)
 	fmt.Println(data1)
 }
-func nameExample(is *ipfs.IPFS) {
+func nameExample(is, is2 *ipfs.IPFS) {
 	data := []byte("meow meow ^.^")
 	cid := ipfs.File.Hash(data, is)
 
@@ -73,9 +65,9 @@ func nameExample(is *ipfs.IPFS) {
 	fmt.Println(name)
 	fmt.Println(name1)
 	fmt.Println(name2)
-	data2, _ := ipfs.Name.Get(name, is)
+	data2, _ := ipfs.Name.Get(name, is2)
 	fmt.Println(data2)
-	cid1, _ := ipfs.Name.GetCid(name, is)
+	cid1, _ := ipfs.Name.GetCid(name, is2)
 	fmt.Println(cid)
 	fmt.Println(cid1)
 }
@@ -101,7 +93,7 @@ func pubsubExample(is, is2 *ipfs.IPFS){
 		<-time.Tick(1*time.Second)
 	}
 }
-func objectExample(is *ipfs.IPFS){
+func objectExample(is, is2 *ipfs.IPFS){
 	fs := ipfs.Object.NewFileSystem(is)
 	data := is.File().Add([]byte("meow meow ^.^"), true)
 	fs.Add(data, "file0.dat")
@@ -121,7 +113,11 @@ func objectExample(is *ipfs.IPFS){
 	fs.Cp("/a/file0cp.dat", "/file02.dat")
 	fs.Cd("/")
 	fmt.Println(fs.Ls())
-	fmt.Println(fs.GetAllFiles(fs.Root()))
+	fs2 := ipfs.Object.NewFileSystem(is2)
+	fmt.Println(fs2.GetAllFiles(fs.Root()))
+	fs2.Init(fs.Root())
+	pth02, err := fs2.Get("file02.dat")
+	fmt.Println(pth02, err)
 }
 
 func mapExample(mode string, is *ipfs.IPFS) {

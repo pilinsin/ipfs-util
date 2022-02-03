@@ -69,9 +69,16 @@ type fileSystem struct {
 }
 
 func (self objectUtil) NewFileSystem(is *IPFS) *fileSystem {
-	rt := is.Object().NewRoot()
-	now := ipath.IpfsPath(rt.Cid())
-	return &fileSystem{is.Object(), rt, now, "/"}
+	fs := &fileSystem{
+		obj: is.Object(),
+	}
+	fs.Init(is.Object().NewRoot())
+	return fs
+}
+func (self *fileSystem) Init(root ipath.Resolved){
+	self.root = root
+	self.nowPath = ipath.IpfsPath(root.Cid())
+	self.nowPathStr = "/"
 }
 func (self *fileSystem) Root() ipath.Resolved{
 	return ipath.IpfsPath(self.root.Cid())
