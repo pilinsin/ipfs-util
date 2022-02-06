@@ -34,6 +34,13 @@ func (iv *indexedValue) Unmarshal(m []byte) error {
 	iv.idx = miv.Idx
 	return nil
 }
+func getValue(m []byte) ([]byte, bool){
+	idxValue := &indexedValue{}
+	if err := idxValue.Unmarshal(m); err != nil {
+		return nil, false
+	}
+	return idxValue.value, true
+}
 
 type orderedScalableMap struct {
 	bm       baseMap
@@ -50,16 +57,8 @@ func newOrderedScalableMap(capacity int) IScalableMap {
 		idx:      0,
 	}
 }
-func (sm orderedScalableMap) Len(is *ipfs.IPFS) int {
-	length := len(sm.bm)
-	for _, cid := range sm.cids {
-		bm := baseMap{}
-		if err := bm.fromCid(cid, is); err != nil {
-			return -1
-		}
-		length += len(bm)
-	}
-	return length
+func (sm orderedScalableMap) Len() int {
+	return len(sm.bm) + sm.capacity * len(sm.cids)
 }
 func (sm orderedScalableMap) Type() string { return "ordered-append-only-map" }
 func (sm *orderedScalableMap) Append(key interface{}, value []byte, is *ipfs.IPFS) error {
@@ -155,11 +154,13 @@ func (sm orderedScalableMap) NextKeyValue(is *ipfs.IPFS) <-chan *keyValue {
 	}()
 	return ch
 }
-func (sm orderedScalableMap) containKey(key interface{}, tp string, is *ipfs.IPFS) ([]byte, bool) {
+func (sm orderedScalableMap) ContainKey(key interface{}, is *ipfs.IPFS) ([]byte, bool) {
 	hash := keyToTypeHash(key, sm.Type())
-
+	return sm.ContainKeyHash(hash, is)
+}
+func (sm orderedScalableMap) ContainKeyHash(hash string, is *ipfs.IPFS) ([]byte, bool){
 	if v, ok := sm.bm[hash]; ok {
-		return v, true
+		return getValue(v)
 	}
 	for _, cid := range sm.cids {
 		bm := baseMap{}
@@ -167,32 +168,14 @@ func (sm orderedScalableMap) containKey(key interface{}, tp string, is *ipfs.IPF
 			return nil, false
 		}
 		if v, ok := bm[hash]; ok {
-			return v, true
+			return getValue(v)
 		}
 	}
 	return nil, false
 }
-func (sm orderedScalableMap) ContainKey(key interface{}, is *ipfs.IPFS) ([]byte, bool) {
-	v, ok := sm.containKey(key, sm.Type(), is)
-	if !ok {
-		return nil, false
-	}
-	idxValue := &indexedValue{}
-	if err := idxValue.Unmarshal(v); err != nil {
-		return nil, false
-	}
-
-	return idxValue.value, true
-}
-func (sm orderedScalableMap) ContainCid(cid string, is *ipfs.IPFS) bool {
-	m, err := ipfs.File.Get(cid, is)
-	if err != nil {
-		return false
-	}
-	sm0 := &orderedScalableMap{}
-	if err := sm0.Unmarshal(m); err != nil {
-		return false
-	}
+func (sm orderedScalableMap) ContainMap(contained IScalableMap, is *ipfs.IPFS) bool {
+	sm0, ok := contained.(*orderedScalableMap)
+	if !ok{return false}
 
 	if sm0.capacity != sm.capacity {
 		return false

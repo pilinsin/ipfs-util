@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"time"
 	"github.com/pilinsin/ipfs-util"
-	hls "github.com/pilinsin/ipfs-util/hls"
 	scmap "github.com/pilinsin/ipfs-util/scalablemap"
 )
 
@@ -23,24 +21,17 @@ func main() {
 	}
 	defer is2.Close()
 	
-	//hlsExample(is)
 
 //	/*
-	mapExample("const", is)
 	mapExample("ordered", is)
+	mapExample("var", is)
+	mapExample("const", is)
 
 	fileExample(is, is2)
 	nameExample(is, is2)
 	objectExample(is, is2)
 	pubsubExample(is, is2)
 //	*/
-}
-func hlsExample(is *ipfs.IPFS){
-	cid, err := hls.ConvertAndAdd("example.mp4", "/usr/bin/ffmpeg", "/usr/bin/ffprobe", is)
-	fmt.Println(cid, err)	
-	m, err := ipfs.File.Get(cid, is)
-	fmt.Println(err)
-	fmt.Println(os.WriteFile("video.m3u8", m, 0777))
 }
 
 func fileExample(is, is2 *ipfs.IPFS) {
@@ -125,6 +116,5 @@ func mapExample(mode string, is *ipfs.IPFS) {
 	vm.Append("a", nil, is)
 	m := vm.Marshal()
 	vm2, err := scmap.UnmarshalScalableMap(mode, m)
-	cid := ipfs.File.Add(m, is)
-	fmt.Println(vm2.ContainCid(cid, is), err)
+	fmt.Println(vm2.ContainMap(vm, is), err)
 }

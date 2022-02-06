@@ -17,7 +17,6 @@ type keyValue struct {
 	key   string
 	value []byte
 }
-
 func (kv keyValue) Key() string {
 	return kv.key
 }
@@ -26,7 +25,6 @@ func (kv keyValue) Value() []byte {
 }
 
 type baseMap map[string][]byte
-
 func (bm baseMap) toMap() map[string][]byte {
 	return map[string][]byte(bm)
 }

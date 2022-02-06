@@ -5,38 +5,50 @@ import (
 	"github.com/pilinsin/util"
 )
 
-type constScalableMap struct {
+type varScalableMap struct {
 	bm       baseMap
 	cids     map[string]struct{}
 	capacity int
 }
 
-func newConstScalableMap(capacity int) IScalableMap {
-	return &constScalableMap{
+func newVarScalableMap(capacity int) IScalableMap {
+	return &varScalableMap{
 		bm:       make(baseMap, capacity),
 		cids:     make(map[string]struct{}, 0),
 		capacity: capacity,
 	}
 }
-func (sm constScalableMap) Len() int {
+func (sm varScalableMap) Len() int {
 	return len(sm.bm) + sm.capacity * len(sm.cids)
 }
-func (sm constScalableMap) Type() string { return "append-only-map" }
-func (sm *constScalableMap) Append(key interface{}, value []byte, is *ipfs.IPFS) error {
-	if _, ok := sm.ContainKey(key, is); ok {
-		return util.NewError("append error: already contain key")
+func (sm varScalableMap) Type() string { return "variable-map" }
+func (sm *varScalableMap) Append(key interface{}, value []byte, is *ipfs.IPFS) error {
+	hash := keyToTypeHash(key, sm.Type())
+
+	for cid, _ := range sm.cids{
+		bm := baseMap{}
+		if err := bm.fromCid(cid, is); err != nil {
+			return err
+		}
+		if _, ok := bm[hash]; ok{
+			bm[hash] = value
+			cid2 := bm.toCid(is)
+			delete(sm.cids, cid)
+			sm.cids[cid2] = struct{}{}
+			return nil
+		}
 	}
 
-	hash := keyToTypeHash(key, sm.Type())
+	_, update := sm.bm[hash]
 	sm.bm[hash] = value
-	if len(sm.bm) >= sm.capacity {
+	if !update && len(sm.bm) >= sm.capacity {
 		cid := sm.bm.toCid(is)
 		sm.cids[cid] = struct{}{}
 		sm.bm = make(baseMap, sm.capacity)
 	}
 	return nil
 }
-func (sm constScalableMap) Next(is *ipfs.IPFS) <-chan []byte {
+func (sm varScalableMap) Next(is *ipfs.IPFS) <-chan []byte {
 	ch := make(chan []byte)
 	go func() {
 		defer close(ch)
@@ -55,7 +67,7 @@ func (sm constScalableMap) Next(is *ipfs.IPFS) <-chan []byte {
 	}()
 	return ch
 }
-func (sm constScalableMap) NextKeyValue(is *ipfs.IPFS) <-chan *keyValue {
+func (sm varScalableMap) NextKeyValue(is *ipfs.IPFS) <-chan *keyValue {
 	ch := make(chan *keyValue)
 	go func() {
 		defer close(ch)
@@ -74,11 +86,11 @@ func (sm constScalableMap) NextKeyValue(is *ipfs.IPFS) <-chan *keyValue {
 	}()
 	return ch
 }
-func (sm constScalableMap) ContainKey(key interface{}, is *ipfs.IPFS) ([]byte, bool) {
+func (sm varScalableMap) ContainKey(key interface{}, is *ipfs.IPFS) ([]byte, bool) {
 	hash := keyToTypeHash(key, sm.Type())
 	return sm.ContainKeyHash(hash, is)
 }
-func (sm constScalableMap) ContainKeyHash(hash string, is *ipfs.IPFS) ([]byte, bool){
+func (sm varScalableMap) ContainKeyHash(hash string, is *ipfs.IPFS) ([]byte, bool){
 	if v, ok := sm.bm[hash]; ok {
 		return v, true
 	}
@@ -93,34 +105,25 @@ func (sm constScalableMap) ContainKeyHash(hash string, is *ipfs.IPFS) ([]byte, b
 	}
 	return nil, false
 }
-func (sm constScalableMap) ContainMap(contained IScalableMap, is *ipfs.IPFS) bool {
-	sm0, ok := contained.(*constScalableMap)
+func (sm varScalableMap) ContainMap(contained IScalableMap, is *ipfs.IPFS) bool {
+	sm0, ok := contained.(*varScalableMap)
 	if !ok{return false}
 
 	if sm0.capacity != sm.capacity {
 		return false
 	}
-	for cid0, _ := range sm0.cids {
-		if _, ok := sm.cids[cid0]; !ok {
+
+	for kv := range sm0.NextKeyValue(is){
+		hash := kv.Key()
+		v0 := kv.Value()
+		v, ok := sm.ContainKeyHash(hash, is)
+		if !ok || !util.ConstTimeBytesEqual(v, v0){
 			return false
 		}
 	}
-	bMap0 := sm0.bm.toMap()
-	if ok := util.MapContainMap(sm.bm.toMap(), bMap0); ok {
-		return true
-	}
-	for cid, _ := range sm.cids {
-		bm := &baseMap{}
-		if err := bm.fromCid(cid, is); err != nil {
-			return false
-		}
-		if ok := util.MapContainMap(bm.toMap(), bMap0); ok {
-			return true
-		}
-	}
-	return false
+	return true
 }
-func (sm *constScalableMap) Marshal() []byte {
+func (sm *varScalableMap) Marshal() []byte {
 	mScalableMap := &struct {
 		Bm   baseMap
 		Cids map[string]struct{}
@@ -129,7 +132,7 @@ func (sm *constScalableMap) Marshal() []byte {
 	m, _ := util.Marshal(mScalableMap)
 	return m
 }
-func (sm *constScalableMap) Unmarshal(m []byte) error {
+func (sm *varScalableMap) Unmarshal(m []byte) error {
 	mScalableMap := &struct {
 		Bm   baseMap
 		Cids map[string]struct{}
