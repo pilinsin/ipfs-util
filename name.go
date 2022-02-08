@@ -67,10 +67,30 @@ func (self *name) Publish(pth ipath.Path, vt string, kw string) iface.IpnsEntry 
 	ipnsEntry, _ := self.api.Name().Publish(self.ctx, pth, options.Name.ValidTime(t), options.Name.Key(kw))
 	return ipnsEntry
 }
-func (self *name) Resolve(name string) (ipath.Path, error) {
+func (self *name) Resolve(name string) (ipath.Resolved, error) {
 	ctx, cancel := util.CancelTimerContext(10 * time.Second)
 	defer cancel()
-	return self.api.Name().Resolve(ctx, name, options.Name.ResolveOption(nsopts.DhtRecordCount(1)))
+
+	pth, err := self.api.Name().Resolve(ctx, name, options.Name.ResolveOption(nsopts.DhtRecordCount(1)))
+	if err != nil{return nil, err}
+	switch pth.Namespace() {
+	case "ipfs":
+		cidStr := strings.TrimPrefix(pth.String(), "/ipfs/")
+		cid, err := cid.Decode(cidStr)
+		if err != nil {
+			return nil, err
+		}
+		return ipath.IpfsPath(cid), nil
+	case "ipld":
+		cidStr := strings.TrimPrefix(pth.String(), "/ipld/")
+		cid, err := cid.Decode(cidStr)
+		if err != nil {
+			return nil, err
+		}
+		return ipath.IpldPath(cid), nil
+	default:
+		return nil, util.NewError("invalid path")
+	}
 }
 
 type nameUtil struct{}
@@ -114,6 +134,6 @@ func (self nameUtil) GetCid(ipnsName string, is *IPFS) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return strings.TrimPrefix(pth.String(), "/ipfs/"), nil
+		return pth.Cid().String(), nil
 	}
 }
